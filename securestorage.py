@@ -205,7 +205,7 @@ if __name__ == "__main__":
     from os import remove
 
     try:
-        my_vault = Vault('superpasswdord123', "testvault.bin")
+        my_vault = Vault('super', "testvault.bin")
 
     except BadVaultFile:
         print("Error opening vault file.")
