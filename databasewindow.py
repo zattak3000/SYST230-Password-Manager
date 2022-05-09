@@ -1,5 +1,10 @@
+from random import choice
 from tkinter import *
 from tkinter import ttk
+
+from string import ascii_uppercase as uppercase
+from string import ascii_lowercase as lowercase
+from string import digits, punctuation
 
 
 class DetailsView(ttk.LabelFrame):
@@ -61,6 +66,7 @@ class DetailsView(ttk.LabelFrame):
         self.__user_var.set(username)
         self.__passwd_var.set(password)
 
+
 class PlaceholderEntry(ttk.Entry):
     def __init__(self, master, *args, title='', textvariable=None, foreground='black', **kwargs):
 
@@ -92,6 +98,12 @@ class PlaceholderEntry(ttk.Entry):
         self.bind('<FocusIn>', lambda _ : self.__placeholder_update(True))
         self.bind('<FocusOut>', lambda _ : self.__placeholder_update(False))
 
+    # TODO fix trace loop with external and internal tkinter variables that this funciton avoids
+    def set_text(self, text):
+        self['foreground'] = self.__foreground
+        self.__placeholder = False
+        self.__internal_var.set(text)
+
     def __update_external(self, *_):
         if self.__placeholder:
             self.__external_var.set('')
@@ -110,6 +122,74 @@ class PlaceholderEntry(ttk.Entry):
             self['foreground'] = 'gray'
             self.insert(0, self.__title)
 
+
+class GeneratorOptions(ttk.LabelFrame):
+    def __init__(self, master, *args, command=None, **kwargs):
+        super().__init__(master, text='Password Generator', borderwidth=10, *args, **kwargs)
+
+        self.__callback = command
+
+        self.__makewidgets()
+
+    def __generate(self, *_):
+        
+        self.__len_text.set(f"Length: {self.__len_var.get()}")
+
+        characters = []
+
+        if self.__upper_var.get():
+            characters.append(uppercase)
+
+        if self.__lower_var.get():
+            characters.append(lowercase)
+
+        if self.__number_var.get():
+            characters.append(digits)
+
+        if self.__symbol_var.get():
+            characters.append(punctuation)
+
+        password = []
+
+        if characters:
+            for i in range(self.__len_var.get()):
+                password.append(choice(choice(characters)))
+
+        self.__callback("".join(password))
+
+    def __makewidgets(self):
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+
+        self.__len_text = StringVar(self, "Length: 12")
+        self.__len_var = IntVar(self, 12)
+        self.__upper_var = IntVar(self, 1)
+        self.__lower_var = IntVar(self, 1)
+        self.__number_var = IntVar(self)
+        self.__symbol_var = IntVar(self)
+
+        len_label = ttk.Label(self, textvariable=self.__len_text)
+        len_label.pack(side=TOP)
+
+        len_slider = ttk.Scale(self, from_=1, to=50, variable=self.__len_var, length=200, command=self.__generate)
+        len_slider.pack(side=TOP)
+
+        upper_check = ttk.Checkbutton(self, variable=self.__upper_var, text="Uppercase", command=self.__generate)
+        upper_check.pack(side=TOP)
+
+        lower_check = ttk.Checkbutton(self, variable=self.__lower_var, text="Lowercase", command=self.__generate)
+        lower_check.pack(side=TOP)
+
+        number_check = ttk.Checkbutton(self, variable=self.__number_var, text="Numbers", command=self.__generate)
+        number_check.pack(side=TOP)
+
+        symbol_check = ttk.Checkbutton(self, variable=self.__symbol_var, text="Symbols", command=self.__generate)
+        symbol_check.pack(side=TOP)
+
+
+# TODO change parent to frame?
+# TODO change command to kwarg
+# TODO apply/cancel button
 class CredsWindow(Toplevel):
     def __init__(self, master, command, site="", user="", passwd=""):
         super().__init__(master)
@@ -121,24 +201,26 @@ class CredsWindow(Toplevel):
         self.__callback = command
         self.__makewidgets()
 
-    # TODO Refactor placeholder entry into own class
     def __makewidgets(self):
         self.columnconfigure(0, weight=1)
 
         site_field = PlaceholderEntry(self, title='Site', textvariable=self.__site_var)
-        site_field.grid(column=0, row=0, padx=10, pady=(10,5))
+        site_field.grid(column=0, row=0, padx=10, pady=(10,5), sticky=NSEW)
 
         site_field.bind('<Return>', self.__apply)
 
         user_field = PlaceholderEntry(self, title='Username', textvariable=self.__user_var)
-        user_field.grid(column=0, row=1, padx=10, pady=5)
+        user_field.grid(column=0, row=1, padx=10, pady=5, sticky=NSEW)
 
         user_field.bind('<Return>', self.__apply)
 
         passwd_field = PlaceholderEntry(self, title="Password", textvariable=self.__passwd_var)
-        passwd_field.grid(column=0, row=2, padx=10, pady=(5,10))
+        passwd_field.grid(column=0, row=2, padx=10, pady=5, sticky=NSEW)
 
         passwd_field.bind('<Return>', self.__apply)
+
+        passwd_generator = GeneratorOptions(self, command=lambda passwd: passwd_field.set_text(passwd))
+        passwd_generator.grid(column=0, row=3, padx=10, pady=10)
 
     # TODO HORRIBLE
     def __apply(self, _):
@@ -157,4 +239,20 @@ class CredsWindow(Toplevel):
         self.destroy()
 
 
+if __name__ == "__main__":
+    tk = Tk()
 
+    # def cb(pwd):
+    #     print(f'Password: {pwd}')
+
+    # test = GeneratorOptions(tk, cb)
+    # tk.columnconfigure(0, weight=1)
+    # tk.rowconfigure(0, weight=1)
+    # test.grid(column=0, row=0, padx=5, pady=(0,5))
+
+    def cb(*args):
+        print(*args)
+
+    test = CredsWindow(tk, cb)
+
+    tk.mainloop()
