@@ -21,7 +21,6 @@ lbx = Listbox(root, listvariable=lbxvar)
 
 lbx.grid(sticky=NSEW)
 
-
 # Scrollbar Config
 scr = ttk.Scrollbar(root, orient=VERTICAL, command=lbx.yview)
 scr.grid(row=0, column=1, sticky=NS)
@@ -51,11 +50,18 @@ lbx.bind("<<ListboxSelect>>", display_creds)
         
 # Buttons on main screen config
 def save(s, u, p):
+        if s in vlt.list_creds():
+            confirm = askyesno('Delete Credentials', f'Are you sure you want to overwrite "{s}"')
+            if not confirm:
+                return
+
         print('New/Updated Credentials:')
         print(f'Site: {s}')
         print(f'User: {u}')
         print(f'Pass: {p}')
-        print('Saving doesn\'t work right yet :(\n')
+        vlt.add_creds(s, u, p)
+        vlt.write()
+        lbxvar.set(vlt.list_creds())
 
 def cred_add():
     window = CredsWindow(root, save)
@@ -86,12 +92,10 @@ for i, (label, cb) in enumerate(buttons):
 
 
 # Login config
-# TODO make username do something like vault file name or something
-def login_cb(user, passwd):
+def login_cb(file, passwd):
     try:
         global vlt
-        # TODO allow vault file selection
-        vlt = Vault(passwd, "testvault.bin")
+        vlt = Vault(passwd, file)
     
     except DecryptionError:
         return False
