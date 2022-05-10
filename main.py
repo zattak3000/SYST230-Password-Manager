@@ -14,11 +14,10 @@ root = Tk()
 root.columnconfigure((0,2), weight=1)
 root.rowconfigure(0, weight=1)
 
-
 # Listbox Config
 lbxvar = StringVar(root)
-lbx = Listbox(root, listvariable=lbxvar)
 
+lbx = Listbox(root, listvariable=lbxvar)
 lbx.grid(sticky=NSEW)
 
 # Scrollbar Config
@@ -27,6 +26,7 @@ scr.grid(row=0, column=1, sticky=NS)
 
 lbx['yscrollcommand'] = scr.set
 
+# Right panel config
 frm = Frame(root)
 frm.grid(row=0, column=2, padx=10, pady=10, sticky=NSEW)
 
@@ -46,7 +46,6 @@ def display_creds(_):
         dvw.display("","")
 
 lbx.bind("<<ListboxSelect>>", display_creds)
-
         
 # Buttons on main screen config
 def save(s, u, p):
@@ -77,7 +76,10 @@ def cred_delete():
     confirm = askyesno('Delete Credentials', f'Are you sure you want to delete "{site}"')
 
     if confirm:
-        print("Site deleted! (Not Really)")
+        print("Site deleted!")
+        vlt.del_creds(site)
+        vlt.write()
+        lbxvar.set(vlt.list_creds())
     else:
         print("Operation Cancelled")
 
